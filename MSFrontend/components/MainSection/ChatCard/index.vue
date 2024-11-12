@@ -1,9 +1,13 @@
-<script setup>
+<script setup lang="ts">
 // 可以在此处定义一些数据和方法
 // 使用 defineProps 定义 props
+export interface user{
+  data:string;
+  speaker:string;
+}
 const props = defineProps({
     result: {
-        type: String,
+        type: {},
         required: true
     }
 });
@@ -19,7 +23,7 @@ const props = defineProps({
             </Avatar>
             <!-- 用户名 -->
             <div class="flex items-center">
-                <span class="font-semibold text-slate-500">User 1</span>
+                <span class="font-semibold text-slate-500">{{ props.result.transcriptionSpeaker }}</span>
             </div>
         </div>
 
@@ -28,7 +32,7 @@ const props = defineProps({
 
             <!-- 消息内容 -->
             <p class="mt-2 text-black text-start ">
-                {{ props.result }}
+                {{ props.result.transcriptionResult}}
             </p>
 
             <!-- 时间显示 -->

@@ -4,6 +4,7 @@ import { ChevronRightIcon } from '@radix-icons/vue'
 
 // 引用全局的 transcriptionResult 状态
 const transcriptionResult = useState('transcriptionResult');
+const transcriptionSpeaker =useState('transcriptionSpeaker');
 
 // watchEffect(() => {
 //     console.log(`OldValue changed to ${transcriptionResult}, NewValue is now ${transcriptionResult}`)
@@ -11,12 +12,13 @@ const transcriptionResult = useState('transcriptionResult');
 // })
 
 // step1: 定义一个数组，用于存储每次更新的 transcriptionResult 值
-const transcriptionHistory = ref([]);
+const transcriptionHistory = ref([{}]);
+
 
 // step2: 监听 transcriptionResult 的变化，每次更新时将值添加到 transcriptionHistory 数组中
 watchEffect(() => {
-    if (transcriptionResult.value) {
-        transcriptionHistory.value.push(transcriptionResult.value);
+    if (transcriptionResult.value||transcriptionSpeaker.value) {
+        transcriptionHistory.value.push({transcriptionResult,transcriptionSpeaker});
     }
 });
 

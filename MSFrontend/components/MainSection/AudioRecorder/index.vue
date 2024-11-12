@@ -82,7 +82,7 @@ function startRecording() {
     }
     var queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
 
-    ws = new WebSocket(`ws://localhost:27000/ws/transcribe${queryString}`);
+    ws = new WebSocket(`ws://localhost:27000/ws/transcribe_test${queryString}`);
     ws.binaryType = 'arraybuffer';
 
     ws.onopen = function (event) {
@@ -115,10 +115,11 @@ function startRecording() {
                 // var jsonResponse = JSON.stringify(resJson, null, 4);
                 // transcriptionResult.value += "\n" + (resJson.data || 'No speech recognized');
                 transcriptionResult.value = resJson.data || { message: 'No speech recognized' };
+                transcriptionSpeaker.value=resJson.speaker || { message: 'No speech recognized' };
             }
-            if (resJson.code == 2) {
-                transcriptionSpeaker.value = resJson.data || { message: 'No speaker recognized' }
-            }
+            // if (resJson.code == 2) {
+            //     transcriptionSpeaker.value = resJson.data || { message: 'No speaker recognized' }
+            // }
         } catch (e) {
             console.error('Failed to parse response data', e);
             // transcriptionResult.value += "\n" + evt.data;
