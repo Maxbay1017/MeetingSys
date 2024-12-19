@@ -1,27 +1,22 @@
 <template>
-  <div class="container">
+  <div class="flex flex-col ">
     <Top/>
 
-    <div class="content">
+    <div class="flex mt-20 mx-auto max-w-7xl w-full px-4">
       <router-view></router-view>
     </div>
 
-    <MeetingBottom/>
+    <!-- <MeetingBottom/> -->
   </div>
 
 
 </template>
 
 <script setup lang="ts" name="app">
-  import home from '@/views/home/index.vue';
-  import Test from '@/views/Test/index.vue';
+  // import home from '@/views/home/index.vue';
+  // import Test from '@/views/Test/index.vue';
 
 </script>
 
 <style scoped lang="scss">
-  .content{
-    width: 100%;
-    min-height: 700px;
-  }
-
 </style>

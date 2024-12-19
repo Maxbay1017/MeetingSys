@@ -1,7 +1,6 @@
 import { createApp } from 'vue'
 //清除默认样式
-import '@/input.css'
-import '@/style/reset.scss'
+import '@/style/style.css'
 //引入根组件APP
 // @ts-ignore
 import App from './App.vue'

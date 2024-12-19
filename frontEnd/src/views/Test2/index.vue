@@ -120,7 +120,7 @@
     const generateReport = async () => {
         try {
             // 发送数据到后端
-            const response = await axios.post('http://localhost:8000/generate-pdf', {
+            const response = await axios.post('http://192.168.1.16:8000/generate-pdf', {
                 records: records.value,
                 summaryText: summaryText.value,
                 blinkCount: blinkCount.value,
