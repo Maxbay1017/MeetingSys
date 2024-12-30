@@ -22,6 +22,14 @@ export default createRouter({
             {
                 path:'/Recorder2',
                 component:()=>import('@/views/Recorder2/index.vue')
+            },
+            {
+                path:'/Search',
+                component:()=>import('@/views/Search/index.vue')
+            },
+            {
+                path:'/History',
+                component:()=>import('@/views/History/index.vue')
             }
 
     ],

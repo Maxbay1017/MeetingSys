@@ -32,12 +32,14 @@
                         @click="generateReport">
                         点击生成报告
                     </el-button>
-                    <!--<el-button-->
-                    <!--    class="downLoadReport"-->
-                    <!--    type="primary"-->
-                    <!--    @click="generatePdf">-->
-                    <!--    下载报告-->
-                    <!--</el-button>-->
+
+                    <el-button class="savaData"
+                               type="primary"
+                               :disabled="!(records && blinkCount && mouthOpenCount && summaryText)"
+                               @click="saveData">
+                       点击保存
+                    </el-button>
+
 
                 </div>
 
@@ -48,7 +50,7 @@
             </div>
             <div class="speakerInfo">
                 <el-card style="height:50px;width: 80% " v-for="(record, index) in visibleRecords" :key="index">
-                    <strong>{{record.index}}:{{ record.speaker }}:</strong> {{ record.content }}
+                    <strong>{{record.currentTime}}:{{ record.speaker }}:</strong> {{ record.content }}
                 </el-card>
             </div>
 
@@ -91,11 +93,17 @@
     const pdfGenerated = ref(false);//pdf是否创建
 
 
+    const meetingStartTime = ref<number>(0); // 会议开始时间（时间戳）
+    const isMeetingStarted = ref(false); // 会议是否已开始
+
+
 
     interface Message {
         index:number,
         speaker: string;
         content: string;
+        currentTime: string;
+        meetingDuration: number;
     }
 
 
@@ -111,7 +119,9 @@
     let msgTmp:Message={
         index:0,
         speaker:'',
-        content:''
+        content:'',
+        currentTime:'',
+        meetingDuration:0
     };
 
 
@@ -120,7 +130,7 @@
     const generateReport = async () => {
         try {
             // 发送数据到后端
-            const response = await axios.post('http://localhost:8000/generate-pdf', {
+            const response = await axios.post('http://192.168.1.8:8000/generate-pdf', {
                 records: records.value,
                 summaryText: summaryText.value,
                 blinkCount: blinkCount.value,
@@ -182,6 +192,29 @@
 
 
 
+
+    // TODO 保存数据至MongoDB
+    const saveData = async () => {
+        try {
+            const response = await axios.post('http://localhost:8000/save-data', {
+                records: records.value,
+                summaryText: summaryText.value,
+                blinkCount: blinkCount.value,
+                mouthOpenCount: mouthOpenCount.value,
+            });
+
+            if (response.status === 200) {
+                ElMessage.success('保存成功');
+            } else {
+                ElMessage.error('保存失败');
+            }
+        } catch (error) {
+            ElMessage.error('保存失败');
+        }
+    };
+
+
+
     //TODO  生成总结的函数
     const generateSummary = async () => {
         if (records.value.length === 0) {
@@ -189,7 +222,7 @@
             return;
         }
         try {
-            const response = await axios.post('http://192.168.1.16:8000/generate-summary', {
+            const response = await axios.post('http://192.168.1.8:8000/generate-summary', {
                 records: records.value,
             });
 
@@ -228,6 +261,12 @@
     const openVideo=()=>{
         initCamera();
         tmp.value=true;
+
+        //  TODO 默认打开视频就是会议开启
+        isMeetingStarted.value=true;
+        meetingStartTime.value = Date.now(); // 记录会议开始时间（时间戳）
+
+
         ElMessage({
             type:'success',
             message:'摄像头打开成功'
@@ -297,8 +336,8 @@
                 message:'请打开摄像头'
             })
         }else {
-            ws.value=new WebSocket('ws://192.168.1.16:8000/ws');
-            // ws.value=new WebSocket('ws://192.168.1.21:8000/ws');
+            // ws.value=new WebSocket('ws://192.168.1.16:8000/ws');
+            ws.value=new WebSocket('ws://192.168.1.8:8000/ws');
             // ws.value=new WebSocket('ws://localhost:8000/ws');
             ws.value.onopen=()=>{
                 sendFrame();
@@ -379,8 +418,8 @@
             queryParams.push('sv=1');
         }
         const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
-        audioWs.value = new WebSocket(`ws://192.168.1.16:8000/ws/transcribe_test${queryString}`);
-        // audioWs.value = new WebSocket(`ws://192.168.1.21:8000/ws/transcribe_test${queryString}`);
+        // audioWs.value = new WebSocket(`ws://192.168.1.16:8000/ws/transcribe_test${queryString}`);
+        audioWs.value = new WebSocket(`ws://192.168.1.8:8000/ws/transcribe_test${queryString}`);
         audioWs.value.binaryType = 'arraybuffer';
         audioWs.value.onopen = () => {
             record!.start();
@@ -401,12 +440,40 @@
             try {
                 const resJson = JSON.parse(evt.data);
                 if (resJson.code === 0) {
+                    // const currentTime = new Date().toISOString();
+                    const currentTimestamp = Date.now();
+                    const meetingDuration = Math.floor((currentTimestamp - meetingStartTime.value) / 1000); // 计算会议开启时长（秒）
+
+
+                     const currentTime = new Date(currentTimestamp).toLocaleString('zh-CN', {
+                        timeZone: 'Asia/Shanghai', // 设置为北京时间时区
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false, // 使用 24 小时制
+                    }).replace(/\//g, '-'); // 将斜杠替换为横杠
+
                     // TODO  逻辑  如果说话人==userName
                     msgTmp.speaker=resJson.speaker;
                     msgTmp.content=resJson.data;
+                    msgTmp.currentTime=currentTime;
+                    msgTmp.meetingDuration=meetingDuration;
+
+
                     console.log(msgTmp)
                     cnt.value+=1;
-                    records.value.push({'index':cnt.value,'speaker':resJson.speaker,'content':resJson.data})
+                    records.value.push(
+                        {
+                            'index':cnt.value,
+                            'speaker':resJson.speaker,
+                            'content':resJson.data,
+                            'currentTime':currentTime,
+                            'meetingDuration':meetingDuration
+                        }
+                    )
 
 
 
@@ -717,6 +784,13 @@ class Recorder {
                 }
 
                 .generateReport{
+                    margin-left: 0px;
+                    margin-top: 10px;
+                    width: 100%;
+                    height: 50px;
+                }
+
+                .savaData{
                     margin-left: 0px;
                     margin-top: 10px;
                     width: 100%;
