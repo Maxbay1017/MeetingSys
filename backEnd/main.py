@@ -1,6 +1,6 @@
 import glob
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect,UploadFile,HTTPException
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, HTTPException, Form, File
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import cv2
@@ -8,8 +8,9 @@ import numpy as np
 import base64
 import re
 from utils import calculate_ear, calculate_mar, process_frame, shape_to_np, FACIAL_LANDMARKS_IDXS
-import dlib
+# import dlib
 import os
+# from datetime import datetime
 
 
 app = FastAPI()
@@ -122,6 +123,40 @@ async def upload_audio(file: UploadFile):
         return JSONResponse(content={"message": "上传成功", "filename": file.filename})
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"上传失败: {str(e)}")
+
+@app.post("/api/upload")
+async def upload_recording(
+    name: str = Form(...),
+    audio: UploadFile = File(...)
+):
+    try:
+        # 创建用户目录
+        user_dir = os.path.join(SPEAKER_DIR, name)
+        os.makedirs(user_dir, exist_ok=True)
+        
+        # # 生成唯一文件名
+        # timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{name}.wav"
+        file_path = os.path.join(user_dir, filename)
+        
+        # 保存音频文件
+        with open(file_path, "wb") as buffer:
+            buffer.write(await audio.read())
+        
+        return JSONResponse({
+            "status": "success",
+            "message": "录音保存成功",
+            "file_path": file_path
+        })
+        
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status": "error",
+                "message": f"录音保存失败: {str(e)}"
+            }
+        )
 
 
 
