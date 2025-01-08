@@ -32,6 +32,10 @@ export default createRouter({
                 component:()=>import('@/views/History/index.vue')
             },
             {
+                path:'/Recorder',
+                component:()=>import('@/views/Recorder/index.vue')
+            },
+            {
                 path:'/',
                 component:()=>import('@/views/init/index.vue')
             }

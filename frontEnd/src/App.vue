@@ -19,9 +19,15 @@
 </script>
 
 <style scoped lang="scss">
-  .content{
-    width: 100%;
-    min-height: 700px;
-  }
+    .container{
+        .content{
+            width: 100%;
+            min-height: 700px;
+            .top{
+                width: 100%;
+            }
+        }
+    }
+
 
 </style>

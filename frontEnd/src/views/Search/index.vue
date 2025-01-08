@@ -38,6 +38,7 @@
 <script setup lang="ts">
     import { ref } from 'vue';
     import axios from 'axios';
+    import {ElMessage} from "element-plus";
 
     interface Record {
         index: number;
@@ -57,7 +58,7 @@
     const keyword = ref('');
     const results = ref<SearchResult[]>([]);
 
-    // 处理搜索
+    // TODO 处理搜索
     const handleSearch = async () => {
         if (!keyword.value) {
             results.value = [];
@@ -65,11 +66,15 @@
         }
 
         try {
-            const response = await axios.get('http://localhost:8000/search', {
+            const response = await axios.get('http://192.168.1.8:8000/search', {
                 params: { keyword: keyword.value },
             });
             results.value = response.data.results;
         } catch (error) {
+            ElMessage({
+                type:'error',
+                message:"搜索失败"
+            })
             console.error('搜索失败:', error);
             results.value = [];
         }

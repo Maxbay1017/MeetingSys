@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup lang="ts" name="Recorder">
 import { ref, computed } from 'vue'
 
 const speakerName = ref('')
@@ -48,7 +48,7 @@ async function submitRecording() {
   formData.append('audio', audioBlob.value!, `${speakerName.value}.wav`)
 
   try {
-    const response = await fetch('http://0.0.0.0:8000/api/upload', {
+    const response = await fetch('http://192.168.1.8:8000/api/upload', {
       method: 'POST',
       body: formData
     })

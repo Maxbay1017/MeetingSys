@@ -15,7 +15,7 @@
   //  background: #7f7f7f;
   //}
   .buttom {
-      width: 100%;
+      width: 100vw;
       height: 70px;
       background: linear-gradient(90deg, #00BFFF, #1E90FF);
       display: flex;

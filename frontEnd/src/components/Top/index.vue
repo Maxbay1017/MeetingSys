@@ -18,9 +18,11 @@
         </span>
                 <template #dropdown>
                     <el-dropdown-menu>
+                        <el-dropdown-item command="recorder">录音界面</el-dropdown-item>
                         <el-dropdown-item command="history">历史记录</el-dropdown-item>
                         <el-dropdown-item command="search">搜索</el-dropdown-item>
                         <el-dropdown-item command="Home">会议界面</el-dropdown-item>
+
                     </el-dropdown-menu>
                 </template>
             </el-dropdown>
@@ -39,6 +41,8 @@
             router.push({ path: '/Search' });
         }else if(command==='Home'){
             router.push({ path: '/Test2' });
+        }else if(command==='recorder'){
+            router.push({path:'/Recorder'})
         }
     }
 </script>
@@ -46,7 +50,7 @@
 <style scoped lang="scss">
 .top {
     height: 70px;
-    width: 100%;
+    width: 100vw;
     background: linear-gradient(90deg, #1e90ff, #00bfff);
     display: flex;
     align-items: center;

@@ -52,7 +52,7 @@
     // 获取历史记录
     const fetchHistory = async () => {
         try {
-            const response = await axios.get('http://localhost:8000/get-history');
+            const response = await axios.get('http://192.168.1.8:8000/get-history');
             history.value = response.data.history;
         } catch (error) {
             console.error('获取历史记录失败:', error);
