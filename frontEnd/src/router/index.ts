@@ -38,7 +38,12 @@ export default createRouter({
             {
                 path:'/',
                 component:()=>import('@/views/init/index.vue')
+            },
+            {
+                path:'/UploadVideo',
+                component:()=>import('@/views/uploadVideo/index.vue')
             }
+
 
     ],
     //滚动行为：控制滚动条的位置
