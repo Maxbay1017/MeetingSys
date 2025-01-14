@@ -43,11 +43,11 @@
         }else if(command==='Home'){
             router.push({ path: '/Test' });
         }else if(command==='recorder'){
-            router.push({path:'/Recorder'})
+            router.push({path:'/Recorder'});
         }else if(command==='Upload'){
-            router.push({path:'/UploadVideo2'})
+            router.push({path:'/UploadVideo2'});
         }else if(command==='BlinkStatistics'){
-            router.push({path:'/BlinkStatistics'})
+            router.push({path:'/BlinkStatistics'});
         }
     }
 </script>
