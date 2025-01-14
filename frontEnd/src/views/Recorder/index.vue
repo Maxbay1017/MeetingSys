@@ -1,75 +1,81 @@
 <script setup lang="ts" name="Recorder">
-import { ref, computed } from 'vue'
+    import { ref, computed } from 'vue'
 
-const speakerName = ref('')
-const isRecording = ref(false)
-const audioBlob = ref<Blob | null>(null)
+    const speakerName = ref('')
+    const isRecording = ref(false)
+    const audioBlob = ref<Blob | null>(null)
+    const blinkTimes=ref<number[]>([]);
 
-const canSubmit = computed(() => {
-    return speakerName.value.trim() && audioBlob.value
-})
+    const canSubmit = computed(() => {
+        return speakerName.value.trim() && audioBlob.value
+    })
 
-let mediaRecorder: MediaRecorder | null = null
-let audioChunks: Blob[] = []
+    let mediaRecorder: MediaRecorder | null = null
+    let audioChunks: Blob[] = []
 
-async function toggleRecording() {
-    if (!isRecording.value) {
+    async function toggleRecording() {
+        if (!isRecording.value) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+                mediaRecorder = new MediaRecorder(stream)
+
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data)
+                }
+
+                mediaRecorder.onstop = () => {
+                    audioBlob.value = new Blob(audioChunks, { type: 'audio/wav' })
+                    audioChunks = []
+                    stream.getTracks().forEach(track => track.stop())
+                }
+
+                mediaRecorder.start()
+                isRecording.value = true
+            } catch (error) {
+                console.error('无法访问麦克风:', error)
+                alert('无法访问麦克风，请检查权限设置')
+            }
+        } else {
+            mediaRecorder?.stop()
+            isRecording.value = false
+        }
+    }
+
+    async function submitRecording() {
+        if (!canSubmit.value) return
+
+        const formData = new FormData()
+        formData.append('name', speakerName.value)
+        formData.append('audio', audioBlob.value!, `${speakerName.value}.wav`)
+
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-            mediaRecorder = new MediaRecorder(stream)
+            // const response = await fetch('http://192.168.1.8:8000/api/upload', {
+            //     method: 'POST',
+            //     body: formData
+            // })
 
-            mediaRecorder.ondataavailable = (event) => {
-                audioChunks.push(event.data)
+            const response = await fetch('http://localhost:8000/api/upload', {
+                method: 'POST',
+                body: formData
+            })
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`)
             }
 
-            mediaRecorder.onstop = () => {
-                audioBlob.value = new Blob(audioChunks, { type: 'audio/wav' })
-                audioChunks = []
-                stream.getTracks().forEach(track => track.stop())
-            }
+            const result = await response.json()
+            console.log('提交成功:', result)
+            alert('录音提交成功！')
 
-            mediaRecorder.start()
-            isRecording.value = true
+            // 重置表单
+            speakerName.value = ''
+            audioBlob.value = null
+            isRecording.value = false
         } catch (error) {
-            console.error('无法访问麦克风:', error)
-            alert('无法访问麦克风，请检查权限设置')
+            console.error('提交失败:', error)
+            alert('提交失败，请稍后重试')
         }
-    } else {
-        mediaRecorder?.stop()
-        isRecording.value = false
     }
-}
-
-async function submitRecording() {
-    if (!canSubmit.value) return
-
-    const formData = new FormData()
-    formData.append('name', speakerName.value)
-    formData.append('audio', audioBlob.value!, `${speakerName.value}.wav`)
-
-    try {
-        const response = await fetch('http://192.168.1.8:8000/api/upload', {
-            method: 'POST',
-            body: formData
-        })
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`)
-        }
-
-        const result = await response.json()
-        console.log('提交成功:', result)
-        alert('录音提交成功！')
-
-        // 重置表单
-        speakerName.value = ''
-        audioBlob.value = null
-        isRecording.value = false
-    } catch (error) {
-        console.error('提交失败:', error)
-        alert('提交失败，请稍后重试')
-    }
-}
 </script>
 
 <template>

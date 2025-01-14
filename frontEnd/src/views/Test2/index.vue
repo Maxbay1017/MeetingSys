@@ -49,7 +49,7 @@
                 </div>
             </div>
             <div class="speakerInfo">
-                <el-card style="height:50px;width: 80% " v-for="(record, index) in visibleRecords" :key="index">
+                <el-card style="height:70px;width: 80% " v-for="(record, index) in visibleRecords" :key="index">
                     <strong>{{record.currentTime}}:{{ record.speaker }}:</strong> {{ record.content }}
                 </el-card>
             </div>
@@ -84,7 +84,7 @@
     let record: Recorder | null = null;//录音器对象
 
     let userId=ref<number>(0);     //用户的id
-    let userName=ref<String>("zy");  //用户的名字
+    let userName=ref<String>('');  //用户的名字
 
     let cnt=ref<number>(0)
 
@@ -162,41 +162,11 @@
     }
 
 
-    // TODO 监听事件， 如果2s内，用户的嘴巴张嘴表示，此时是用户说话，
-    // watch(mouthOpenCount, (newValue, oldValue) => {
-    //     if (newValue > oldValue) {
-    //         changeCount++;
-    //         if (changeCount >= 2) {
-    //             // TODO 判断事先设定的用户名与后端判定的用户名是否相同
-    //             if(msgTmp.speaker==userName.value){
-    //                 records.value.push({'speaker':msgTmp.speaker,'content':msgTmp.content});
-    //                 ElMessage({
-    //                     type:'success',
-    //                     message:'添加成功'
-    //                 })
-    //                 msgTmp.speaker='';
-    //                 msgTmp.content='';
-    //             }
-    //             changeCount = 0;
-    //             if (timer) {
-    //                 clearTimeout(timer);
-    //             }
-    //         }
-    //         if (timer) clearTimeout(timer);
-    //         timer = setTimeout(() => {
-    //             changeCount = 0;
-    //             timer = null;
-    //         }, 2000);
-    //     }
-    // });
-
-
-
 
     // TODO 保存数据至MongoDB
     const saveData = async () => {
         try {
-            const response = await axios.post('http://localhost:8000/save-data', {
+            const response = await axios.post('http://192.168.1.8:8000/save-data', {
                 records: records.value,
                 summaryText: summaryText.value,
                 blinkCount: blinkCount.value,
@@ -238,22 +208,6 @@
 
         }
     };
-
-
-    // const generateSummary = async () => {
-    //     try {
-    //         // 将 records 发送到后端
-    //         const response = await axios.post('http://localhost:8000/generate-summary', {
-    //             records: records.value,
-    //         });
-    //
-    //         // 更新文本框内容为生成的总结
-    //         summaryText.value = response.data.summary;
-    //     } catch (error) {
-    //         console.error('生成总结失败:', error);
-    //         summaryText.value = '生成总结失败，请重试。';
-    //     }
-    // };
 
 
 

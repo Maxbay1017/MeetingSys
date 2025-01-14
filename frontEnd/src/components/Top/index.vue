@@ -22,7 +22,8 @@
                         <el-dropdown-item command="history">历史记录</el-dropdown-item>
                         <el-dropdown-item command="search">搜索</el-dropdown-item>
                         <el-dropdown-item command="Home">会议界面</el-dropdown-item>
-
+                        <el-dropdown-item command="Upload">上传历史会议</el-dropdown-item>
+                        <el-dropdown-item command="BlinkStatistics">眨眼区间搜索</el-dropdown-item>
                     </el-dropdown-menu>
                 </template>
             </el-dropdown>
@@ -40,9 +41,13 @@
         } else if (command === 'search') {
             router.push({ path: '/Search' });
         }else if(command==='Home'){
-            router.push({ path: '/Test2' });
+            router.push({ path: '/Test' });
         }else if(command==='recorder'){
             router.push({path:'/Recorder'})
+        }else if(command==='Upload'){
+            router.push({path:'/UploadVideo2'})
+        }else if(command==='BlinkStatistics'){
+            router.push({path:'/BlinkStatistics'})
         }
     }
 </script>

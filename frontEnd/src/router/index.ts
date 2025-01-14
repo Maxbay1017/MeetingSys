@@ -40,8 +40,12 @@ export default createRouter({
                 component:()=>import('@/views/init/index.vue')
             },
             {
-                path:'/UploadVideo',
+                path:'/UploadVideo2',
                 component:()=>import('@/views/uploadVideo/index.vue')
+            },
+            {
+                path:'/BlinkStatistics',
+                component:()=>import('@/views/blinkStatistics/index.vue')
             }
 
 

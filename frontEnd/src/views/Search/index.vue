@@ -16,6 +16,11 @@
                 <el-table-column prop="summaryText" label="会议总结" width="300" />
                 <el-table-column prop="blinkCount" label="眨眼次数" width="120" />
                 <el-table-column prop="mouthOpenCount" label="张嘴次数" width="120" />
+                <el-table-column prop="blinkTimes" label="眨眼时间" width="200">
+                    <template #default="{ row }">
+                        <div>{{ row.blinkTimes.join(', ') }} 秒</div>
+                    </template>
+                </el-table-column>
                 <el-table-column label="会议记录">
                     <template #default="{ row }">
                         <el-collapse>
@@ -35,70 +40,74 @@
     </div>
 </template>
 
-<script setup lang="ts">
-    import { ref } from 'vue';
-    import axios from 'axios';
-    import {ElMessage} from "element-plus";
+<script setup lang="ts" >
+import { ref } from 'vue';
+import axios from 'axios';
+import { ElMessage } from 'element-plus';
 
-    interface Record {
-        index: number;
-        speaker: string;
-        content: string;
-        currentTime: string;
-        meetingDuration: number;
+interface Record {
+    index: number;
+    speaker: string;
+    content: string;
+    currentTime: string;
+    meetingDuration: number;
+}
+
+interface SearchResult {
+    records: Record[];
+    summaryText: string;
+    blinkCount: number;
+    mouthOpenCount: number;
+    blinkTimes: number[]; // 新增字段：眨眼时间
+}
+
+const keyword = ref('');
+const results = ref<SearchResult[]>([]);
+
+// 处理搜索
+const handleSearch = async () => {
+    if (!keyword.value) {
+        results.value = [];
+        return;
     }
 
-    interface SearchResult {
-        records: Record[];
-        summaryText: string;
-        blinkCount: number;
-        mouthOpenCount: number;
+    try {
+        const response = await axios.get('http://192.168.1.8:8000/search', {
+            params: { keyword: keyword.value },
+        });
+        // const response = await axios.get('http://localhost:8000/search', {
+        //     params: { keyword: keyword.value },
+        // });
+        results.value = response.data.results;
+    } catch (error) {
+        ElMessage({
+            type: 'error',
+            message: '搜索失败',
+        });
+        console.error('搜索失败:', error);
+        results.value = [];
     }
-
-    const keyword = ref('');
-    const results = ref<SearchResult[]>([]);
-
-    // TODO 处理搜索
-    const handleSearch = async () => {
-        if (!keyword.value) {
-            results.value = [];
-            return;
-        }
-
-        try {
-            const response = await axios.get('http://192.168.1.8:8000/search', {
-                params: { keyword: keyword.value },
-            });
-            results.value = response.data.results;
-        } catch (error) {
-            ElMessage({
-                type:'error',
-                message:"搜索失败"
-            })
-            console.error('搜索失败:', error);
-            results.value = [];
-        }
-    };
+};
 </script>
 
 <style scoped lang="scss">
-    .search-container {
-        padding: 20px;
-    }
+.search-container {
+    padding: 20px;
+}
 
-    .search-card {
-        max-width: 1200px;
-        margin: 0 auto;
-    }
+.search-card {
+    max-width: 1200px;
+    margin: 0 auto;
+}
 
-    .card-header {
-        font-size: 18px;
-        font-weight: bold;
-    }
+.card-header {
+    font-size: 18px;
+    font-weight: bold;
+}
 
-    .search-box {
-        display: flex;
-        gap: 10px;
+.search-box {
+    display: flex;
+    gap: 10px;
     margin-bottom: 20px;
 }
 </style>
