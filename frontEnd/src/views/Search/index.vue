@@ -48,7 +48,19 @@ interface Record {
     meetingDuration: number;
 }
 
+
+
+interface HistoryItem {
+    id: string; // 新增字段：记录的唯一标识
+    records: Record[];
+    summaryText: string;
+    blinkCount: number;
+    mouthOpenCount: number;
+    blinkTimes: number[];
+}
+
 interface SearchResult {
+    id: string; // 新增字段：记录的唯一标识
     records: Record[];
     summaryText: string;
     blinkCount: number;
@@ -60,6 +72,24 @@ const keyword = ref('');
 const results = ref<SearchResult[]>([]);
 
 // 处理搜索
+// const handleSearch = async () => {
+//     if (!keyword.value) {
+//         results.value = [];
+//         return;
+//     }
+//
+//     try {
+//         const response = await axios.get('http://192.168.1.8:8000/search', {
+//             params: { keyword: keyword.value },
+//         });
+//         results.value = response.data.results;
+//     } catch (error) {
+//         ElMessage.error('搜索失败');
+//         console.error('搜索失败:', error);
+//         results.value = [];
+//     }
+// };
+
 const handleSearch = async () => {
     if (!keyword.value) {
         results.value = [];
@@ -70,7 +100,11 @@ const handleSearch = async () => {
         const response = await axios.get('http://192.168.1.8:8000/search', {
             params: { keyword: keyword.value },
         });
-        results.value = response.data.results;
+        // 确保每个结果的 id 字段不为 None
+        results.value = response.data.results.map((item: any) => ({
+            ...item,
+            id: item._id || item.id, // 如果 _id 存在，使用 _id；否则使用 id
+        }));
     } catch (error) {
         ElMessage.error('搜索失败');
         console.error('搜索失败:', error);
@@ -78,8 +112,54 @@ const handleSearch = async () => {
     }
 };
 
+
 // 导出 PDF 文档
-const exportPdf = async (row: SearchResult | HistoryItem, language: string) => {
+// const exportPdf = async (row: HistoryItem | SearchResult, language: string) => {
+//     let loadingInstance: any = null; // 用于保存 Loading 实例
+//
+//     try {
+//         // 如果是英文文档，显示加载动画
+//         if (language === 'en') {
+//             loadingInstance = ElLoading.service({
+//                 lock: true,
+//                 text: '正在生成英文文档...',
+//                 background: 'rgba(0, 0, 0, 0.7)',
+//             });
+//         }
+//
+//         const endpoint = language === 'zh' ? '/generate-pdf-zh' : '/generate-pdf-en';
+//         const response = await axios.post(`http://192.168.1.8:8000${endpoint}`, {
+//             id: row.id, // 传递记录的唯一标识
+//             records: row.records,
+//             summaryText: row.summaryText,
+//             blinkCount: row.blinkCount,
+//             mouthOpenCount: row.mouthOpenCount,
+//             blinkTimes: row.blinkTimes,
+//         }, {
+//             responseType: 'blob',
+//         });
+//
+//         const url = window.URL.createObjectURL(new Blob([response.data]));
+//         const link = document.createElement('a');
+//         link.href = url;
+//         link.setAttribute('download', `report_${language}.pdf`);
+//         document.body.appendChild(link);
+//         link.click();
+//         document.body.removeChild(link);
+//     } catch (error) {
+//         ElMessage.error('导出失败');
+//         console.error('导出失败:', error);
+//     } finally {
+//         // 关闭加载动画
+//         if (loadingInstance) {
+//             loadingInstance.close();
+//         }
+//     }
+// };
+//
+
+
+const exportPdf = async (row: HistoryItem | SearchResult, language: string) => {
     let loadingInstance: any = null; // 用于保存 Loading 实例
 
     try {
@@ -94,6 +174,7 @@ const exportPdf = async (row: SearchResult | HistoryItem, language: string) => {
 
         const endpoint = language === 'zh' ? '/generate-pdf-zh' : '/generate-pdf-en';
         const response = await axios.post(`http://192.168.1.8:8000${endpoint}`, {
+            _id: row.id, // 传递 _id 字段
             records: row.records,
             summaryText: row.summaryText,
             blinkCount: row.blinkCount,
@@ -120,6 +201,49 @@ const exportPdf = async (row: SearchResult | HistoryItem, language: string) => {
         }
     }
 };
+
+
+// const exportPdf = async (row: SearchResult | HistoryItem, language: string) => {
+//     let loadingInstance: any = null; // 用于保存 Loading 实例
+//
+//     try {
+//         // 如果是英文文档，显示加载动画
+//         if (language === 'en') {
+//             loadingInstance = ElLoading.service({
+//                 lock: true,
+//                 text: '正在生成英文文档...',
+//                 background: 'rgba(0, 0, 0, 0.7)',
+//             });
+//         }
+//
+//         const endpoint = language === 'zh' ? '/generate-pdf-zh' : '/generate-pdf-en';
+//         const response = await axios.post(`http://192.168.1.8:8000${endpoint}`, {
+//             records: row.records,
+//             summaryText: row.summaryText,
+//             blinkCount: row.blinkCount,
+//             mouthOpenCount: row.mouthOpenCount,
+//             blinkTimes: row.blinkTimes,
+//         }, {
+//             responseType: 'blob',
+//         });
+//
+//         const url = window.URL.createObjectURL(new Blob([response.data]));
+//         const link = document.createElement('a');
+//         link.href = url;
+//         link.setAttribute('download', `report_${language}.pdf`);
+//         document.body.appendChild(link);
+//         link.click();
+//         document.body.removeChild(link);
+//     } catch (error) {
+//         ElMessage.error('导出失败');
+//         console.error('导出失败:', error);
+//     } finally {
+//         // 关闭加载动画
+//         if (loadingInstance) {
+//             loadingInstance.close();
+//         }
+//     }
+// };
 
 // const exportPdf = async (row: SearchResult, language: string) => {
 //     try {

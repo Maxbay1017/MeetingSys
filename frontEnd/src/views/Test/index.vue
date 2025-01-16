@@ -96,15 +96,30 @@
     const meetingStartTime = ref<number>(0); // 会议开始时间（时间戳）
     const isMeetingStarted = ref(false); // 会议是否已开始
 
+    const translatedData = ref<any>(null); // 用于存储翻译后的数据
 
+
+    // interface Message {
+    //     index:number,
+    //     speaker: string;
+    //     content: string;
+    //     currentTime: string;
+    //     meetingDuration: number;
+    //     blinkTime:number   // TODO 眨眼时间(秒)
+    // }
 
     interface Message {
-        index:number,
+        index: number;
         speaker: string;
         content: string;
         currentTime: string;
         meetingDuration: number;
-        blinkTime:number   // TODO 眨眼时间(秒)
+        blinkTime: number; // 眨眼时间（秒）
+        translatedData?: { // 新增字段：翻译后的英文数据（可选）
+            speaker: string;
+            content: string;
+            summaryText: string;
+        };
     }
 
 
@@ -120,14 +135,61 @@
     let timer: number | null = null;
 
     let msgTmp:Message={
+        id:'',
         index:0,
         speaker:'',
         content:'',
         currentTime:'',
-        meetingDuration:0
+        meetingDuration:0,
+
+    };
+
+    import { v4 as uuidv4 } from 'uuid'; // 引入 UUID 库
+
+    const saveData = async () => {
+        try {
+            const id = uuidv4(); // 生成唯一标识
+            const response = await axios.post('http://192.168.1.8:8000/save-data', {
+                id: id, // 上传唯一标识
+                records: records.value,
+                summaryText: summaryText.value,
+                blinkCount: blinkCount.value,
+                mouthOpenCount: mouthOpenCount.value,
+                blinkTimes: blinkTimes.value,
+                translatedData: null, // 可以为空
+            });
+
+            if (response.status === 200) {
+                ElMessage.success('保存成功');
+            } else {
+                ElMessage.error('保存失败');
+            }
+        } catch (error) {
+            ElMessage.error('保存失败');
+        }
     };
 
 
+    // const saveData = async () => {
+    //     try {
+    //         const response = await axios.post('http://192.168.1.8:8000/save-data', {
+    //             records: records.value,
+    //             summaryText: summaryText.value,
+    //             blinkCount: blinkCount.value,
+    //             mouthOpenCount: mouthOpenCount.value,
+    //             blinkTimes: blinkTimes.value,
+    //             translatedData: null, // 可以为空
+    //         });
+    //
+    //         if (response.status === 200) {
+    //             ElMessage.success('保存成功');
+    //         } else {
+    //             ElMessage.error('保存失败');
+    //         }
+    //     } catch (error) {
+    //         ElMessage.error('保存失败');
+    //     }
+    // };
 
     // TODO 点击生成报告
     // const generateReport = async () => {
@@ -189,33 +251,66 @@
 
 
     // TODO 保存数据至MongoDB
-    const saveData = async () => {
-        try {
-            // const response = await axios.post('http://192.168.1.8:8000/save-data', {
-            //     records: records.value,
-            //     summaryText: summaryText.value,
-            //     blinkCount: blinkCount.value,
-            //     mouthOpenCount: mouthOpenCount.value,
-            //     blinkTimes:blinkTimes.value
-            // });
 
-            const response = await axios.post('http://localhost:8000/save-data', {
-                records: records.value,
-                summaryText: summaryText.value,
-                blinkCount: blinkCount.value,
-                mouthOpenCount: mouthOpenCount.value,
-                blinkTimes:blinkTimes.value
-            });
-
-            if (response.status === 200) {
-                ElMessage.success('保存成功');
-            } else {
-                ElMessage.error('保存失败');
-            }
-        } catch (error) {
-            ElMessage.error('保存失败');
-        }
+    const generateId = () => {
+        return Date.now().toString(); // 使用时间戳作为唯一标识
     };
+
+    // 在添加记录时生成唯一标识
+    const addRecord = (speaker: string, content: string) => {
+        const currentTimestamp = Date.now();
+        const meetingDuration = Math.floor((currentTimestamp - meetingStartTime.value) / 1000);
+
+        const newRecord: Message = {
+            id: generateId(), // 生成唯一标识
+            index: records.value.length + 1,
+            speaker,
+            content,
+            currentTime: new Date(currentTimestamp).toLocaleString('zh-CN', {
+                timeZone: 'Asia/Shanghai',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false,
+            }).replace(/\//g, '-'),
+            meetingDuration,
+            blinkTime: 0, // 初始化眨眼时间
+        };
+
+        records.value.push(newRecord);
+    };
+
+
+    // const saveData = async () => {
+    //     try {
+    //         // const response = await axios.post('http://192.168.1.8:8000/save-data', {
+    //         //     records: records.value,
+    //         //     summaryText: summaryText.value,
+    //         //     blinkCount: blinkCount.value,
+    //         //     mouthOpenCount: mouthOpenCount.value,
+    //         //     blinkTimes:blinkTimes.value
+    //         // });
+    //
+    //         const response = await axios.post('http://localhost:8000/save-data', {
+    //             records: records.value,
+    //             summaryText: summaryText.value,
+    //             blinkCount: blinkCount.value,
+    //             mouthOpenCount: mouthOpenCount.value,
+    //             blinkTimes:blinkTimes.value
+    //         });
+    //
+    //         if (response.status === 200) {
+    //             ElMessage.success('保存成功');
+    //         } else {
+    //             ElMessage.error('保存失败');
+    //         }
+    //     } catch (error) {
+    //         ElMessage.error('保存失败');
+    //     }
+    // };
 
 
 

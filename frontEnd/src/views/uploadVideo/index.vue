@@ -124,7 +124,7 @@ const handleVideoUpload = async (event: Event) => {
         const video = document.createElement('video');
         video.src = URL.createObjectURL(file);
         video.onloadedmetadata = () => {
-            video.play();
+            // video.play();
             processVideoFrames(video);
         };
     }
