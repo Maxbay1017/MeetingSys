@@ -25,13 +25,13 @@
                         {{isFacing?'关闭面部特征':'显示面部特征'}}
                     </el-button>
 
-                    <el-button
-                        class="generateReport"
-                        type="primary"
-                        :disabled="!(records && blinkCount && mouthOpenCount && summaryText)"
-                        @click="generateReport">
-                        点击生成报告
-                    </el-button>
+                    <!--<el-button-->
+                    <!--    class="generateReport"-->
+                    <!--    type="primary"-->
+                    <!--    :disabled="!(records && blinkCount && mouthOpenCount && summaryText)"-->
+                    <!--    @click="generateReport">-->
+                    <!--    点击生成报告-->
+                    <!--</el-button>-->
 
                     <el-button class="savaData"
                                type="primary"
@@ -149,7 +149,7 @@
     const saveData = async () => {
         try {
             const id = uuidv4(); // 生成唯一标识
-            const response = await axios.post('http://192.168.1.8:8000/save-data', {
+            const response = await axios.post('http://192.168.1.17:8000/save-data', {
                 id: id, // 上传唯一标识
                 records: records.value,
                 summaryText: summaryText.value,
@@ -170,58 +170,11 @@
     };
 
 
-    // const saveData = async () => {
-    //     try {
-    //         const response = await axios.post('http://192.168.1.8:8000/save-data', {
-    //             records: records.value,
-    //             summaryText: summaryText.value,
-    //             blinkCount: blinkCount.value,
-    //             mouthOpenCount: mouthOpenCount.value,
-    //             blinkTimes: blinkTimes.value,
-    //             translatedData: null, // 可以为空
-    //         });
-    //
-    //         if (response.status === 200) {
-    //             ElMessage.success('保存成功');
-    //         } else {
-    //             ElMessage.error('保存失败');
-    //         }
-    //     } catch (error) {
-    //         ElMessage.error('保存失败');
-    //     }
-    // };
 
-    // TODO 点击生成报告
-    // const generateReport = async () => {
-    //     try {
-    //         // 发送数据到后端
-    //         const response = await axios.post('http://192.168.1.8:8000/generate-pdf', {
-    //             records: records.value,
-    //             summaryText: summaryText.value,
-    //             blinkCount: blinkCount.value,
-    //             mouthOpenCount: mouthOpenCount.value,
-    //         }, {
-    //             responseType: 'blob',  // 指定响应类型为 blob
-    //         });
-    //
-    //         // 创建下载链接
-    //         const url = window.URL.createObjectURL(new Blob([response.data]));
-    //         const link = document.createElement('a');
-    //         link.href = url;
-    //         link.setAttribute('download', 'report.pdf');  // 设置下载文件名
-    //         document.body.appendChild(link);
-    //         link.click();
-    //
-    //         // 移除链接
-    //         document.body.removeChild(link);
-    //     } catch (error) {
-    //         console.error('生成报告失败:', error);
-    //     }
-    // };
 
     const generateReport = async () => {
         try {
-            const response = await axios.post('http://192.168.1.8:8000/generate-pdf', {
+            const response = await axios.post('http://192.168.1.17:8000/generate-pdf', {
                 records: records.value,
                 summaryText: summaryText.value,
                 blinkCount: blinkCount.value,
@@ -284,36 +237,6 @@
     };
 
 
-    // const saveData = async () => {
-    //     try {
-    //         // const response = await axios.post('http://192.168.1.8:8000/save-data', {
-    //         //     records: records.value,
-    //         //     summaryText: summaryText.value,
-    //         //     blinkCount: blinkCount.value,
-    //         //     mouthOpenCount: mouthOpenCount.value,
-    //         //     blinkTimes:blinkTimes.value
-    //         // });
-    //
-    //         const response = await axios.post('http://localhost:8000/save-data', {
-    //             records: records.value,
-    //             summaryText: summaryText.value,
-    //             blinkCount: blinkCount.value,
-    //             mouthOpenCount: mouthOpenCount.value,
-    //             blinkTimes:blinkTimes.value
-    //         });
-    //
-    //         if (response.status === 200) {
-    //             ElMessage.success('保存成功');
-    //         } else {
-    //             ElMessage.error('保存失败');
-    //         }
-    //     } catch (error) {
-    //         ElMessage.error('保存失败');
-    //     }
-    // };
-
-
-
     //TODO  生成总结的函数
     const generateSummary = async () => {
         if (records.value.length === 0) {
@@ -321,7 +244,7 @@
             return;
         }
         try {
-            const response = await axios.post('http://192.168.1.8:8000/generate-summary', {
+            const response = await axios.post('http://192.168.1.17:8000/generate-summary', {
                 records: records.value,
             });
 
@@ -420,7 +343,7 @@
             })
         }else {
             // ws.value=new WebSocket('ws://192.168.1.16:8000/ws');
-            ws.value=new WebSocket('ws://192.168.1.8:8000/ws');
+            ws.value=new WebSocket('ws://192.168.1.17:8000/ws');
             // ws.value=new WebSocket('ws://localhost:8000/ws');
             ws.value.onopen=()=>{
                 sendFrame();
@@ -506,7 +429,7 @@
         }
         const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
         // audioWs.value = new WebSocket(`ws://192.168.1.16:8000/ws/transcribe_test${queryString}`);
-        audioWs.value = new WebSocket(`ws://192.168.1.8:8000/ws/transcribe_test${queryString}`);
+        audioWs.value = new WebSocket(`ws://192.168.1.17:8000/ws/transcribe_test${queryString}`);
         audioWs.value.binaryType = 'arraybuffer';
         audioWs.value.onopen = () => {
             record!.start();
@@ -877,12 +800,6 @@
                     height: 50px;
                 }
 
-                //.downLoadReport{
-                //    margin-left: 0px;
-                //    margin-top: 10px;
-                //    width: 100%;
-                //    height: 50px;
-                //}
             }
             .faceInfo{
                 margin-left: 30px;

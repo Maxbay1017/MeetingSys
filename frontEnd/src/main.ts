@@ -24,6 +24,8 @@ import 'element-plus/dist/index.css'
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 
 
+// 定义全局变量
+// app.config.globalProperties.$apiBaseUrl = 'http://162.168.1.17:8000';
 
 const app=createApp(App)
 //top组件
