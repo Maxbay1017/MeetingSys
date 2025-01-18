@@ -2,8 +2,10 @@
     <div class="container">
         <div class="left">
             <div class="meetingVideo">
-                <video v-if="uploadedVideoUrl" ref="videoRef" :src="uploadedVideoUrl" autoplay controls style="background: #F0F8FF; width:80%;height: 80%;justify-content: center;align-content: center"></video>
-                <input type="file" @change="handleVideoUpload" accept="video/*" style="display: none;" ref="videoUploadInput">
+                <video v-show="uploadedVideoUrl" ref="videoRef" :src="uploadedVideoUrl" controls
+                       style="background: #F0F8FF; width:80%;height: 80%;justify-content: center;align-content: center"></video>
+                <input type="file" @change="handleVideoUpload" accept="video/*" style="display: none;"
+                       ref="videoUploadInput">
                 <button @click="triggerVideoUpload" class="upload-button">上传视频</button>
             </div>
             <div class="summary-section">
@@ -15,39 +17,34 @@
             <div class="info">
                 <div class="buttonList">
                     <el-button class="connect_backEnd" type="primary" @click="toggleConnecting">
-                        {{!isConnecting?'连接后端':'断开连接'}}
+                        {{ !isConnecting ? '连接后端' : '断开连接' }}
                     </el-button>
                     <el-button class="record_audio" type="primary" @click="toggleRecording">
                         {{ isRecording ? '停止录音' : '开始录音' }}
                     </el-button>
                     <el-button class="faceInfo" type="primary" @click="toggleFace">
-                        {{isFacing?'关闭面部特征':'显示面部特征'}}
+                        {{ isFacing ? '关闭面部特征' : '显示面部特征' }}
                     </el-button>
 
-                    <el-button
-                        class="generateReport"
-                        type="primary"
-                        :disabled="!(records && blinkCount && mouthOpenCount && summaryText)"
-                        @click="generateReport">
+                    <el-button class="generateReport" type="primary"
+                               :disabled="!(records && blinkCount && mouthOpenCount && summaryText)" @click="generateReport">
                         点击生成报告
                     </el-button>
 
-                    <el-button class="savaData"
-                               type="primary"
-                               :disabled="!(records && blinkCount && mouthOpenCount && summaryText)"
-                               @click="saveData">
+                    <el-button class="savaData" type="primary"
+                               :disabled="!(records && blinkCount && mouthOpenCount && summaryText)" @click="saveData">
                         点击保存
                     </el-button>
                 </div>
 
                 <div v-if="isFacing" class="faceInfo ">
-                    <el-card>眨眼次数:{{blinkCount}} </el-card>
-                    <el-card style="margin-top: 10px">张嘴次数:{{mouthOpenCount}} </el-card>
+                    <el-card>眨眼次数:{{ blinkCount }} </el-card>
+                    <el-card style="margin-top: 10px">张嘴次数:{{ mouthOpenCount }} </el-card>
                 </div>
             </div>
             <div class="speakerInfo">
                 <el-card style="height:50px;width: 80% " v-for="(record, index) in visibleRecords" :key="index">
-                    <strong>{{record.currentTime}}:{{ record.speaker }}:</strong> {{ record.content }}
+                    <strong>{{ record.currentTime }}:{{ record.speaker }}:</strong> {{ record.content }}
                 </el-card>
             </div>
         </div>
@@ -168,7 +165,7 @@ const connect = () => {
         return;
     }
 
-    ws.value = new WebSocket('ws://192.168.1.8:8000/ws');
+    ws.value = new WebSocket('ws://192.168.1.17:8000/ws');
     ws.value.onopen = () => {
         ElMessage.success('连接后端成功');
         isConnecting.value = true;
@@ -227,7 +224,7 @@ const toggleConnecting = () => {
 // 生成报告
 const generateReport = async () => {
     try {
-        const response = await axios.post('http://192.168.1.8:8000/generate-pdf', {
+        const response = await axios.post('http://192.168.1.17:8000/generate-pdf', {
             records: records.value,
             summaryText: summaryText.value,
             blinkCount: blinkCount.value,
@@ -251,7 +248,7 @@ const generateReport = async () => {
 // 保存数据
 const saveData = async () => {
     try {
-        const response = await axios.post('http://192.168.1.8:8000/save-data', {
+        const response = await axios.post('http://192.168.1.17:8000/save-data', {
             records: records.value,
             summaryText: summaryText.value,
             blinkCount: blinkCount.value,
@@ -275,7 +272,7 @@ const generateSummary = async () => {
         return;
     }
     try {
-        const response = await axios.post('http://192.168.1.8:8000/generate-summary', {
+        const response = await axios.post('http://192.168.1.17:8000/generate-summary', {
             records: records.value,
         });
 
@@ -299,10 +296,36 @@ const toggleRecording = () => {
     }
 };
 
-// 开始录音
-const startRecording = () => {
+const startRecording = async () => {
     const sv = 1;
     const lang = 'auto';
+
+    // 获取视频的音频轨道
+    const videoStream = videoRef.value!.captureStream();
+    const videoAudioTrack = videoStream.getAudioTracks()[0];
+
+    // 获取麦克风的音频轨道
+    const microphoneStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const microphoneAudioTrack = microphoneStream.getAudioTracks()[0];
+
+    // 创建 AudioContext
+    const audioContext = new AudioContext();
+
+    // 创建视频音频源
+    const videoSource = audioContext.createMediaStreamSource(new MediaStream([videoAudioTrack]));
+
+    // 创建麦克风音频源
+    const microphoneSource = audioContext.createMediaStreamSource(new MediaStream([microphoneAudioTrack]));
+
+    // 创建目标节点
+    const destination = audioContext.createMediaStreamDestination();
+
+    // 连接音频源到目标节点
+    videoSource.connect(destination);
+    microphoneSource.connect(destination);
+
+    // 初始化录音器
+    record = new Recorder(destination.stream);
 
     // 构造查询参数
     const queryParams = [];
@@ -313,7 +336,7 @@ const startRecording = () => {
         queryParams.push('sv=1');
     }
     const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
-    audioWs.value = new WebSocket(`ws://192.168.1.8:8000/ws/transcribe_test${queryString}`);
+    audioWs.value = new WebSocket(`ws://192.168.1.17:8000/ws/transcribe_test${queryString}`);
     audioWs.value.binaryType = 'arraybuffer';
     audioWs.value.onopen = () => {
         record!.start();
@@ -379,8 +402,88 @@ const startRecording = () => {
 
     isRecording.value = true;
 };
+// const startRecording = () => {
+//     const sv = 1;
+//     const lang = 'auto';
+
+//     // 构造查询参数
+//     const queryParams = [];
+//     if (lang) {
+//         queryParams.push(`lang=${lang}`);
+//     }
+//     if (sv) {
+//         queryParams.push('sv=1');
+//     }
+//     const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
+//     audioWs.value = new WebSocket(`ws://192.168.1.17:8000/ws/transcribe_test${queryString}`);
+//     audioWs.value.binaryType = 'arraybuffer';
+//     audioWs.value.onopen = () => {
+//         record!.start();
+//         audioInterval = setInterval(() => {
+//             if (audioWs.value && audioWs.value.readyState === 1) {
+//                 const audioBlob = record!.getBlob();
+//                 const reader = new FileReader();
+//                 reader.onloadend = () => {
+//                     audioWs.value!.send(audioBlob);
+//                     record!.clear();
+//                 };
+//                 reader.readAsArrayBuffer(audioBlob);
+//             }
+//         }, 500);
+//     };
+
+//     audioWs.value.onmessage = (evt) => {
+//         try {
+//             const resJson = JSON.parse(evt.data);
+//             if (resJson.code === 0) {
+//                 const currentTimestamp = Date.now();
+//                 const meetingDuration = Math.floor((currentTimestamp - meetingStartTime.value) / 1000); // 计算会议开启时长（秒）
+
+//                 const currentTime = new Date(currentTimestamp).toLocaleString('zh-CN', {
+//                     timeZone: 'Asia/Shanghai', // 设置为北京时间时区
+//                     year: 'numeric',
+//                     month: '2-digit',
+//                     day: '2-digit',
+//                     hour: '2-digit',
+//                     minute: '2-digit',
+//                     second: '2-digit',
+//                     hour12: false, // 使用 24 小时制
+//                 }).replace(/\//g, '-'); // 将斜杠替换为横杠
+
+//                 // TODO  逻辑  如果说话人==userName
+//                 msgTmp.speaker = resJson.speaker;
+//                 msgTmp.content = resJson.data;
+//                 msgTmp.currentTime = currentTime;
+//                 msgTmp.meetingDuration = meetingDuration;
+
+//                 console.log(msgTmp);
+//                 cnt.value += 1;
+//                 records.value.push({
+//                     index: cnt.value,
+//                     speaker: resJson.speaker,
+//                     content: resJson.data,
+//                     currentTime: currentTime,
+//                     meetingDuration: meetingDuration,
+//                 });
+//             }
+//         } catch (e) {
+//             console.error('解析音频数据失败:', e);
+//         }
+//     };
+
+//     audioWs.value.onclose = () => {
+//         console.log('WebSocket connection closed');
+//     };
+
+//     audioWs.value.onerror = (error) => {
+//         console.error('WebSocket error: ', error);
+//     };
+
+//     isRecording.value = true;
+// };
 
 // 停止录音
+
 const stopRecording = () => {
     if (audioWs.value) {
         audioWs.value.close();
@@ -398,15 +501,38 @@ const initRecorder = (stream: MediaStream) => {
 // 初始化
 onMounted(async () => {
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        initRecorder(stream);
+        // 延迟 500ms，确保页面和音频设备已加载
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // 获取麦克风输入的音频流
+        const microphoneStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+        // 确保 videoRef.value 已经正确初始化
+        if (!videoRef.value) {
+            throw new Error('videoRef 未正确绑定到 <video> 元素');
+        }
+
+        // 初始化录音器
+        initRecorder(microphoneStream);
     } catch (error) {
+        console.error('无法获取音频输入:', error);
         ElMessage({
             type: 'error',
-            message: '无法获取音频输入',
+            message: '无法获取音频输入，请检查麦克风权限',
         });
     }
 });
+// onMounted(async () => {
+//     try {
+//         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+//         initRecorder(stream);
+//     } catch (error) {
+//         ElMessage({
+//             type: 'error',
+//             message: '无法获取音频输入',
+//         });
+//     }
+// });
 
 // 组件销毁
 onUnmounted(() => {
