@@ -3,9 +3,9 @@
         <div class="left">
             <div class="meetingVideo">
                 <video v-show="uploadedVideoUrl" ref="videoRef" :src="uploadedVideoUrl" controls
-                       style="background: #F0F8FF; width:80%;height: 80%;justify-content: center;align-content: center"></video>
+                    style="background: #F0F8FF; width:80%;height: 80%;justify-content: center;align-content: center"></video>
                 <input type="file" @change="handleVideoUpload" accept="video/*" style="display: none;"
-                       ref="videoUploadInput">
+                    ref="videoUploadInput">
                 <button @click="triggerVideoUpload" class="upload-button">上传视频</button>
             </div>
             <div class="summary-section">
@@ -27,12 +27,12 @@
                     </el-button>
 
                     <el-button class="generateReport" type="primary"
-                               :disabled="!(records && blinkCount && mouthOpenCount && summaryText)" @click="generateReport">
+                        :disabled="!(records && blinkCount && mouthOpenCount && summaryText)" @click="generateReport">
                         点击生成报告
                     </el-button>
 
                     <el-button class="savaData" type="primary"
-                               :disabled="!(records && blinkCount && mouthOpenCount && summaryText)" @click="saveData">
+                        :disabled="!(records && blinkCount && mouthOpenCount && summaryText)" @click="saveData">
                         点击保存
                     </el-button>
                 </div>
@@ -116,7 +116,6 @@ const handleVideoUpload = async (event: Event) => {
     if (input.files && input.files[0]) {
         const file = input.files[0];
         uploadedVideoUrl.value = URL.createObjectURL(file);
-
         // 读取视频文件并发送帧
         const video = document.createElement('video');
         video.src = URL.createObjectURL(file);

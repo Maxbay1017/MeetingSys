@@ -1,5 +1,6 @@
 import glob
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, HTTPException, Form, File
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,9 +12,25 @@ from utils import calculate_ear, calculate_mar, process_frame, shape_to_np, FACI
 # import dlib
 import os
 # from datetime import datetime
+from activateTools import get_hardware_info
+from activateTools.ActivationSystem import  ActivationSystem
 
+activation_system = ActivationSystem()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 首次运行初始化
+    if not os.path.exists(activation_system.activation_file):
+        fingerprint = get_hardware_info()
+        activation_key = activation_system.generate_activation_key(fingerprint)
+        activation_system.save_activation(activation_key)
+        print("Initial activation completed")
 
-app = FastAPI()
+    # 验证激活状态
+    if not activation_system.validate_activation():
+        raise HTTPException(status_code=403, detail="Activation validation failed")
+
+    yield
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -22,6 +39,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
 
 EYE_AR_THRESH = 0.2
 MAR_THRESH = 0.3
@@ -39,8 +58,8 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-detector = dlib.get_frontal_face_detector()
-predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+# detector = dlib.get_frontal_face_detector()
+# predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 
 # @app.websocket("/ws")
 # async def websocket_endpoint(websocket: WebSocket):
